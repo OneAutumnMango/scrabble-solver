@@ -25,15 +25,15 @@ class Tree:
     def is_word(self, word: str) -> bool:
         node = self.root
         for char in word:
-            node, is_word = self.next(node, char)
+            node = node.next(char)
             if not node:
                 return False
-        return is_word
+        return node.is_word
     
     def can_extend(self, prefix):
         node = self.root
-        for ch in prefix:
-            node, is_word = self.next(node, ch)
+        for char in prefix:
+            node = node.next(char)
             if not node:
                 return False
         return True
