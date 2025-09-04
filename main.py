@@ -18,20 +18,19 @@ def extend_word_full(dictionary, board, hand):
     def scan_slots(line):
         """
         Returns list of slots. Each slot is a list of positions in the line.
-        A slot is contiguous letters + empty squares.
+        A slot is contiguous letters + empty squares. Gaps (Board.EMPTY) are allowed
+        as long as letters from hand can fill them.
         """
         slots = []
-        start = None
-        for i, cell in enumerate(line):
-            if cell != Board.EMPTY or (start is not None):
-                if start is None:
-                    start = i
-            else:
-                if start is not None:
-                    slots.append(list(range(start, i)))
-                    start = None
-        if start is not None:
-            slots.append(list(range(start, len(line))))
+        start = 0
+        while start < len(line):
+            # skip leading Board.EMPTY if you want only anchor positions
+            end = start
+            while end < len(line) and (line[end] != Board.EMPTY or (line[end] == Board.EMPTY)):
+                end += 1
+            if start != end:
+                slots.append(list(range(start, end)))
+            start = end + 1
         return slots
 
     # --- Helper: Generate words recursively along a slot ---
