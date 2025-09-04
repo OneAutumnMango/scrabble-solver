@@ -30,10 +30,10 @@ class Tree:
                 return False
         return is_word
     
-    def can_extend(tree, prefix):
-        node = tree.root
+    def can_extend(self, prefix):
+        node = self.root
         for ch in prefix:
-            node, is_word = tree.next(node, ch)
+            node, is_word = self.next(node, ch)
             if not node:
                 return False
         return True
