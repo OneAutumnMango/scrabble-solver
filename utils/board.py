@@ -1,7 +1,9 @@
 class Board:
+    EMPTY = '_'
+
     def __init__(self, rows=15, cols=15):
         # Initialize an empty board
-        self.grid = [[' ' for _ in range(cols)] for _ in range(rows)]
+        self.grid = [[Board.EMPTY for _ in range(cols)] for _ in range(rows)]
     
     def __getitem__(self, idx):
         return self.grid[idx]
@@ -17,8 +19,14 @@ class Board:
             word (str): The word to place on the board.
             r (int): The starting row index (0-based).
             c (int): The starting column index (0-based).
-            dr (int): Row direction increment. Use 0 for horizontal, 1 for vertical.
-            dc (int): Column direction increment. Use 1 for horizontal, 0 for vertical.
+            dr (int): Row direction increment:
+                    - 1 to move down
+                    - -1 to move up
+                    - 0 to stay in the same row
+            dc (int): Column direction increment:
+                    - 1 to move right
+                    - -1 to move left
+                    - 0 to stay in the same column
 
         Example:
             board.place_word("cat", 2, 0, 0, 1)  # places "cat" horizontally starting at row 2, column 0
@@ -31,16 +39,16 @@ class Board:
 
 
     def __str__(self):
-        return '\n'.join(''.join(row) for row in self.grid)
+        return '\n'.join(' '.join(row) for row in self.grid)
 
     
     # def scan_line(self, line):
     #     segments = []
     #     i = 0
     #     while i < len(line):
-    #         if line[i] != ' ':  # start of a filled segment
+    #         if line[i] != '_':  # start of a filled segment
     #             start = i
-    #             while i < len(line) and line[i] != ' ':
+    #             while i < len(line) and line[i] != '_':
     #                 i += 1
     #             end = i
     #             segments.append(line[start:end])
@@ -68,6 +76,6 @@ class Board:
 
 if __name__ == "__main__":
     board = Board()
-    line = [' ', ' ', 'a', 'b', ' ', ' ', 'a', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+    line = ['_', '_', 'a', 'b', '_', '_', 'a', '_', '_', '_', '_', '_', '_', '_', '_']
     segments = board.scan_line(line)
     print(segments)
