@@ -13,8 +13,7 @@ def extend_word_full(dictionary, board, hand):
     rows, cols = len(board), len(board[0])
     directions = [(0, 1), (1, 0)]  # horizontal, vertical
 
-    # --- Helper: Recursively generate words along a slot ---
-    def generate_words(slot_positions, prefix="", used_positions=None, hand_letters=None):
+    def generate_words(slot_positions, dr, dc, prefix="", used_positions=None, hand_letters=None):
         if used_positions is None:
             used_positions = []
         if hand_letters is None:
@@ -36,66 +35,79 @@ def extend_word_full(dictionary, board, hand):
 
         if cell == Board.EMPTY:
             for i, letter in enumerate(hand_letters):
+                if not check_cross_word(dictionary, board, r, c, dr, dc, letter):
+                    continue
                 next_hand = hand_letters[:i] + hand_letters[i+1:]
                 next_used = used_positions + [(r, c, letter)]
-                local_results += generate_words(rest_positions, prefix + letter, next_used, next_hand)
+                local_results += generate_words(rest_positions, dr, dc, prefix + letter, next_used, next_hand)
         else:
-            local_results += generate_words(rest_positions, prefix + cell, used_positions, hand_letters)
+            local_results += generate_words(rest_positions, dr, dc, prefix + cell, used_positions, hand_letters)
 
         return local_results
 
-    # --- Scan rows and columns ---
     for dr, dc in directions:
         if dr == 0:  # horizontal
             for r in range(rows):
                 slot_positions = [(r, c) for c in range(cols)]
-                # Start recursion at each position in the slot
                 for start_idx in range(len(slot_positions)):
-                    results += generate_words(slot_positions[start_idx:])
+                    results += generate_words(slot_positions[start_idx:], dr, dc)
         else:  # vertical
             for c in range(cols):
                 slot_positions = [(r, c) for r in range(rows)]
                 for start_idx in range(len(slot_positions)):
-                    results += generate_words(slot_positions[start_idx:])
+                    results += generate_words(slot_positions[start_idx:], dr, dc)
 
     return results
 
+
 def check_cross_word(dictionary, board, r, c, dr, dc, letter):
     """
-    Returns True if the perpendicular word formed by placing `letter` at (r,c) is valid.
-    dr, dc: direction of the main word
+    Returns True if placing `letter` at (r,c) in the main word direction (dr,dc)
+    creates a valid perpendicular word.
     """
     rows, cols = len(board), len(board[0])
     if dr == 0:  # horizontal main word -> check vertical cross
         start_r = r
-        while start_r > 0 and board[start_r-1][c] != Board.EMPTY:
+        while start_r > 0 and board[start_r - 1][c] != Board.EMPTY:
             start_r -= 1
         end_r = r
-        while end_r < rows-1 and board[end_r+1][c] != Board.EMPTY:
+        while end_r < rows - 1 and board[end_r + 1][c] != Board.EMPTY:
             end_r += 1
-        # build the cross word
+
+        # if no perpendicular neighbor, it's fine
+        if start_r == end_r:
+            return True
+
+        # build the vertical word
         word = ""
-        for row in range(start_r, end_r+1):
+        for row in range(start_r, end_r + 1):
             if row == r:
                 word += letter
             else:
                 word += board[row][c]
         return dictionary.is_word(word)
-    elif dc == 0:  # vertical main word -> check horizontal cross
+
+    elif dc == 0:  # main word is vertical → check horizontal cross
         start_c = c
-        while start_c > 0 and board[r][start_c-1] != Board.EMPTY:
+        while start_c > 0 and board[r][start_c - 1] != Board.EMPTY:
             start_c -= 1
         end_c = c
-        while end_c < cols-1 and board[r][end_c+1] != Board.EMPTY:
+        while end_c < cols - 1 and board[r][end_c + 1] != Board.EMPTY:
             end_c += 1
+
+        if start_c == end_c:
+            return True
+
         word = ""
-        for col in range(start_c, end_c+1):
+        for col in range(start_c, end_c + 1):
             if col == c:
                 word += letter
             else:
                 word += board[r][col]
         return dictionary.is_word(word)
-    return True  # single letters with no neighbors are ok
+
+    return True
+
 
 
 
@@ -109,7 +121,7 @@ def main():
     board.place_word("hey", 4, 1, 0, 1) 
 
 
-    hand = "chaty"
+    hand = "catcy"
 
     r_start, c_start = 0, 1
     dr, dc = 1, 0  # vertical
