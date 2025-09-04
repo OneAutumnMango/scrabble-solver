@@ -38,11 +38,51 @@ def extend_word_full(dictionary, board, hand):
         #  - is a word
         #  - at least one tile was placed (no zero-placement words)
         #  - anchored: either used a board tile in the main word OR made at least one valid cross
-        if prefix and dictionary.is_word(prefix) and used_positions and (used_board_in_main or made_valid_cross):
-            k = key_of(prefix, used_positions, dr, dc)
-            if k not in seen:
-                seen.add(k)
-                local_results.append((prefix, used_positions.copy(), main_positions.copy(), dr, dc))
+        if prefix and used_positions and (used_board_in_main or made_valid_cross):
+            full_positions = []
+            if dr == 0:  # horizontal
+                r = slot_positions[0][0] if slot_positions else used_positions[0][0]
+                # find start col
+                start_c = min(p[1] for p in used_positions + main_positions)
+                while start_c > 0 and board[r][start_c - 1] != Board.EMPTY:
+                    start_c -= 1
+                # find end col
+                end_c = max(p[1] for p in used_positions + main_positions)
+                while end_c < cols - 1 and board[r][end_c + 1] != Board.EMPTY:
+                    end_c += 1
+                # build positions
+                for c in range(start_c, end_c + 1):
+                    if (r, c) in {(rp, cp) for rp, cp, _ in used_positions}:
+                        letter = next(l for rr, cc, l in used_positions if rr == r and cc == c)
+                    elif (r, c) in {(rp, cp) for rp, cp, l in main_positions}:
+                        letter = next(l for rr, cc, l in main_positions if rr == r and cc == c)
+                    else:
+                        letter = board[r][c]
+                    full_positions.append((r, c, letter))
+            else:  # vertical
+                c = slot_positions[0][1] if slot_positions else used_positions[0][1]
+                start_r = min(p[0] for p in used_positions + main_positions)
+                while start_r > 0 and board[start_r - 1][c] != Board.EMPTY:
+                    start_r -= 1
+                end_r = max(p[0] for p in used_positions + main_positions)
+                while end_r < rows - 1 and board[end_r + 1][c] != Board.EMPTY:
+                    end_r += 1
+                for r in range(start_r, end_r + 1):
+                    if (r, c) in {(rp, cp) for rp, cp, _ in used_positions}:
+                        letter = next(l for rr, cc, l in used_positions if rr == r and cc == c)
+                    elif (r, c) in {(rp, cp) for rp, cp, l in main_positions}:
+                        letter = next(l for rr, cc, l in main_positions if rr == r and cc == c)
+                    else:
+                        letter = board[r][c]
+                    full_positions.append((r, c, letter))
+
+            full_word = "".join(l for _, _, l in full_positions)
+            if dictionary.is_word(full_word):
+                k = key_of(full_word, used_positions, dr, dc)
+                if k not in seen:
+                    seen.add(k)
+                    local_results.append((full_word, used_positions.copy(), full_positions.copy(), dr, dc))
+
 
         if not slot_positions:
             return local_results
