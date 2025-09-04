@@ -11,36 +11,15 @@ def extend_word_full(dictionary, board, hand):
     """
     results = []
     rows, cols = len(board), len(board[0])
-
     directions = [(0, 1), (1, 0)]  # horizontal, vertical
 
-    # --- Helper: Scan a single line into slots ---
-    def scan_slots(line):
-        """
-        Returns list of slots. Each slot is a list of positions in the line.
-        A slot is contiguous letters + empty squares. Gaps (Board.EMPTY) are allowed
-        as long as letters from hand can fill them.
-        """
-        slots = []
-        start = 0
-        while start < len(line):
-            # skip leading Board.EMPTY if you want only anchor positions
-            end = start
-            while end < len(line) and (line[end] != Board.EMPTY or (line[end] == Board.EMPTY)):
-                end += 1
-            if start != end:
-                slots.append(list(range(start, end)))
-            start = end + 1
-        return slots
-
-    # --- Helper: Generate words recursively along a slot ---
+    # --- Helper: Recursively generate words along a slot ---
     def generate_words(slot_positions, prefix="", used_positions=None, hand_letters=None):
         if used_positions is None:
             used_positions = []
         if hand_letters is None:
             hand_letters = hand
 
-        # Stop if prefix cannot be extended
         if not dictionary.can_extend(prefix):
             return []
 
@@ -48,7 +27,6 @@ def extend_word_full(dictionary, board, hand):
         if prefix and dictionary.is_word(prefix):
             local_results.append((prefix, used_positions.copy()))
 
-        # Move to next position
         if not slot_positions:
             return local_results
 
@@ -57,32 +35,28 @@ def extend_word_full(dictionary, board, hand):
         cell = board[r][c]
 
         if cell == Board.EMPTY:
-            # Try every letter from hand
             for i, letter in enumerate(hand_letters):
                 next_hand = hand_letters[:i] + hand_letters[i+1:]
                 next_used = used_positions + [(r, c, letter)]
                 local_results += generate_words(rest_positions, prefix + letter, next_used, next_hand)
         else:
-            # Use existing board letter
             local_results += generate_words(rest_positions, prefix + cell, used_positions, hand_letters)
 
         return local_results
 
-    # --- Scan rows ---
-    for r in range(rows):
-        line = board[r]
-        slots = scan_slots(line)
-        for slot in slots:
-            slot_positions = [(r, c) for c in slot]
-            results += generate_words(slot_positions)
-
-    # --- Scan columns ---
-    for c in range(cols):
-        line = [board[r][c] for r in range(rows)]
-        slots = scan_slots(line)
-        for slot in slots:
-            slot_positions = [(r, c) for r in slot]
-            results += generate_words(slot_positions)
+    # --- Scan rows and columns ---
+    for dr, dc in directions:
+        if dr == 0:  # horizontal
+            for r in range(rows):
+                slot_positions = [(r, c) for c in range(cols)]
+                # Start recursion at each position in the slot
+                for start_idx in range(len(slot_positions)):
+                    results += generate_words(slot_positions[start_idx:])
+        else:  # vertical
+            for c in range(cols):
+                slot_positions = [(r, c) for r in range(rows)]
+                for start_idx in range(len(slot_positions)):
+                    results += generate_words(slot_positions[start_idx:])
 
     return results
 
